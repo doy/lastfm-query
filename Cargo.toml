@@ -4,3 +4,6 @@ version = "0.1.0"
 authors = ["Jesse Luehrs <doy@tozt.net>"]
 
 [dependencies]
+directories = "1.0"
+failure = "0.1"
+rusqlite = "0.15"
