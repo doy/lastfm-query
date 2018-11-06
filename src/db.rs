@@ -15,16 +15,19 @@ pub struct DB {
 
 impl DB {
     pub fn new<P: AsRef<std::path::Path>>(path: &P) -> Result<DB> {
-        if !path.as_ref().exists() {
-            Self::create(path)?;
+        let conn = if path.as_ref().exists() {
+            rusqlite::Connection::open(path)?
         }
+        else {
+            Self::create(path)?
+        };
 
-        return Ok(DB {
-            conn: rusqlite::Connection::open(path)?,
-        })
+        return Ok(DB { conn })
     }
 
-    fn create<P: AsRef<std::path::Path>>(path: &P) -> Result<()> {
+    fn create<P: AsRef<std::path::Path>>(
+        path: &P
+    ) -> Result<rusqlite::Connection> {
         println!(
             "Initializing database at {}",
             path.as_ref().to_string_lossy(),
@@ -34,7 +37,7 @@ impl DB {
             std::fs::create_dir_all(parent)?;
             let conn = rusqlite::Connection::open(path)?;
             conn.execute(SCHEMA, rusqlite::NO_PARAMS)?;
-            Ok(())
+            Ok(conn)
         }
         else {
             unimplemented!();
