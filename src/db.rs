@@ -43,4 +43,17 @@ impl DB {
             unimplemented!();
         }
     }
+
+    pub fn most_recent_timestamp(&self) -> Result<Option<i64>> {
+        Ok(self.conn.query_row(
+            "SELECT timestamp FROM tracks ORDER BY timestamp DESC LIMIT 1",
+            rusqlite::NO_PARAMS,
+            |row| Some(row.get(0))
+        ).or_else(|e| {
+            match e {
+                rusqlite::Error::QueryReturnedNoRows => Ok(None),
+                _ => Err(e),
+            }
+        })?)
+    }
 }
