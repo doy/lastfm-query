@@ -6,7 +6,7 @@ authors = ["Jesse Luehrs <doy@tozt.net>"]
 [dependencies]
 directories = "1.0"
 failure = "0.1"
-pbr = "1.0"
+indicatif = "0.9"
 reqwest = "0.9"
 rusqlite = "0.15"
 serde = "1.0"

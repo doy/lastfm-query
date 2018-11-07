@@ -1,6 +1,6 @@
 extern crate directories;
 extern crate failure;
-extern crate pbr;
+extern crate indicatif;
 extern crate reqwest;
 extern crate rusqlite;
 extern crate serde;
@@ -29,10 +29,16 @@ fn main() {
 
     let to_fetch = exporter.tracks_to_sync().unwrap();
     println!("need to download {} tracks", to_fetch);
-    let mut bar = pbr::ProgressBar::new(to_fetch);
 
-    exporter.sync(|_| { bar.inc(); })
+    let bar = indicatif::ProgressBar::new(to_fetch);
+    bar.set_style(
+        indicatif::ProgressStyle::default_bar()
+            .progress_chars("=> ")
+            .template("{percent:>3}% [{wide_bar}] {eta:5}")
+    );
+
+    exporter.sync(|_| { bar.inc(1); })
         .expect("failed to update db");
 
-    bar.finish_print("done");
+    bar.finish_with_message("done");
 }
