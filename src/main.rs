@@ -1,5 +1,6 @@
 extern crate directories;
 extern crate failure;
+extern crate pbr;
 extern crate reqwest;
 extern crate rusqlite;
 extern crate serde;
@@ -8,6 +9,7 @@ extern crate serde_json;
 extern crate serde_derive;
 
 mod error;
+mod exporter;
 mod lastfm;
 mod paths;
 mod db;
@@ -23,10 +25,14 @@ fn main() {
     let db = db::DB::new(&paths::dbpath())
         .expect("failed to create db");
     let lastfm = lastfm::LastFMClient::new(api_key, username);
+    let exporter = exporter::Exporter::new(&db, &lastfm);
 
-    println!("{}", lastfm.track_count().unwrap());
+    let to_fetch = exporter.tracks_to_sync().unwrap();
+    println!("need to download {} tracks", to_fetch);
+    let mut bar = pbr::ProgressBar::new(to_fetch);
 
-    for track in lastfm.tracks().take(10) {
-        println!("{}", track.name);
-    }
+    exporter.sync(|_| { bar.inc(); })
+        .expect("failed to update db");
+
+    bar.finish_print("done");
 }

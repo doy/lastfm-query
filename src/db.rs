@@ -1,4 +1,5 @@
 use error::Result;
+use lastfm;
 
 const SCHEMA: &'static str = "
     CREATE TABLE `tracks` (
@@ -55,5 +56,24 @@ impl DB {
                 _ => Err(e),
             }
         })?)
+    }
+
+    pub fn insert_tracks<F: FnMut(lastfm::Track)>(
+        &self,
+        tracks: impl Iterator<Item=lastfm::Track>,
+        mut f: F
+    ) -> Result<()> {
+        let mut sth = self.conn.prepare("INSERT INTO tracks VALUES (?, ?, ?, ?)")?;
+        for track in tracks {
+            sth.execute(
+            &[
+                &track.artist as &rusqlite::types::ToSql,
+                &track.album,
+                &track.name,
+                &track.timestamp,
+            ]).map(|_| ())?;
+            f(track);
+        }
+        Ok(())
     }
 }

@@ -15,8 +15,8 @@ pub struct LastFMClient {
 
 pub struct Track {
     pub artist: String,
-    pub name: String,
     pub album: String,
+    pub name: String,
     pub timestamp: i64,
 }
 
@@ -66,8 +66,8 @@ impl<'a> Tracks<'a> {
                 .map(|t| {
                     Ok(Track {
                         artist: t.artist.text.clone(),
-                        name: t.name.clone(),
                         album: t.album.text.clone(),
+                        name: t.name.clone(),
                         timestamp: t.date.uts.parse()?,
                     })
                 })
