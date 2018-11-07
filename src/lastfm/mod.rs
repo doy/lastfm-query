@@ -22,7 +22,7 @@ pub struct Track {
 
 pub struct Tracks<'a> {
     client: &'a LastFMClient,
-    page: u64,
+    page: Option<u64>,
     buf: Vec<Track>,
     from: Option<i64>,
 }
@@ -31,14 +31,20 @@ impl<'a> Tracks<'a> {
     fn new(client: &LastFMClient, from: Option<i64>) -> Tracks {
         Tracks {
             client,
-            page: 0,
+            page: None,
             buf: vec![],
             from,
         }
     }
 
     fn get_next_page(&mut self) -> Result<()> {
-        self.page += 1;
+        if !self.page.is_some() {
+            self.page = Some(self.client.get_total_pages(self.from)?);
+        }
+        let page = self.page.unwrap();
+        if page < 1 {
+            return Ok(())
+        }
 
         let req = self.client.client
             .get(API_ROOT)
@@ -47,7 +53,7 @@ impl<'a> Tracks<'a> {
                 ("api_key", &self.client.api_key),
                 ("user", &self.client.user),
                 ("format", "json"),
-                ("page", &format!("{}", self.page)),
+                ("page", &format!("{}", page)),
                 ("limit", "200"),
             ]);
         let req = if let Some(from) = self.from {
@@ -72,6 +78,7 @@ impl<'a> Tracks<'a> {
                     })
                 })
                 .collect::<Result<Vec<Track>>>()?;
+            self.page = Some(page - 1);
             Ok(())
         }
         else {
@@ -104,6 +111,23 @@ impl LastFMClient {
     }
 
     pub fn track_count(&self, from: Option<i64>) -> Result<u64> {
+        let data = self.recent_tracks(from)?;
+        Ok(data.recenttracks.attr.total.parse()?)
+    }
+
+    pub fn tracks(&self, from: Option<i64>) -> Tracks {
+        Tracks::new(&self, from)
+    }
+
+    fn get_total_pages(&self, from: Option<i64>) -> Result<u64> {
+        let data = self.recent_tracks(from)?;
+        Ok(data.recenttracks.attr.totalPages.parse()?)
+    }
+
+    fn recent_tracks(
+        &self,
+        from: Option<i64>,
+    ) -> Result<api_types::recent_tracks> {
         let req = self.client
             .get(API_ROOT)
             .query(&[
@@ -111,6 +135,7 @@ impl LastFMClient {
                 ("api_key", &self.api_key),
                 ("user", &self.user),
                 ("format", "json"),
+                ("limit", "200"),
             ]);
         let req = if let Some(from) = from {
             req.query(&[("from", &format!("{}", from))])
@@ -123,14 +148,10 @@ impl LastFMClient {
 
         if res.status().is_success() {
             let data: api_types::recent_tracks = res.json()?;
-            Ok(data.recenttracks.attr.total.parse()?)
+            Ok(data)
         }
         else {
             Err(failure::err_msg(res.status().as_str().to_string()))
         }
-    }
-
-    pub fn tracks(&self, from: Option<i64>) -> Tracks {
-        Tracks::new(&self, from)
     }
 }

@@ -1,4 +1,5 @@
 #![allow(non_camel_case_types)]
+#![allow(non_snake_case)]
 
 #[derive(Deserialize)]
 pub struct track_artist {
@@ -28,6 +29,7 @@ pub struct track {
 #[derive(Deserialize)]
 pub struct recent_tracks_recenttracks_attr {
     pub total: String, // no idea why this is a string
+    pub totalPages: String,
 }
 
 #[derive(Deserialize)]
