@@ -69,12 +69,13 @@ impl<'a> Tracks<'a> {
             let data: api_types::recent_tracks = res.json()?;
             self.buf = data.recenttracks.track
                 .iter()
+                .filter(|t| { t.date.is_some() })
                 .map(|t| {
                     Ok(Track {
                         artist: t.artist.text.clone(),
                         album: t.album.text.clone(),
                         name: t.name.clone(),
-                        timestamp: t.date.uts.parse()?,
+                        timestamp: t.date.as_ref().unwrap().uts.parse()?,
                     })
                 })
                 .collect::<Result<Vec<Track>>>()?;

@@ -23,7 +23,7 @@ pub struct track {
     pub artist: track_artist,
     pub name: String,
     pub album: track_album,
-    pub date: track_date,
+    pub date: Option<track_date>,
 }
 
 #[derive(Deserialize)]
