@@ -24,21 +24,23 @@ pub struct Tracks<'a> {
     client: &'a LastFMClient,
     page: u64,
     buf: Vec<Track>,
+    from: Option<i64>,
 }
 
 impl<'a> Tracks<'a> {
-    fn new(client: &LastFMClient) -> Tracks {
+    fn new(client: &LastFMClient, from: Option<i64>) -> Tracks {
         Tracks {
             client,
             page: 0,
             buf: vec![],
+            from,
         }
     }
 
     fn get_next_page(&mut self) -> Result<()> {
         self.page += 1;
 
-        let mut res = self.client.client
+        let req = self.client.client
             .get(API_ROOT)
             .query(&[
                 ("method", "user.getrecenttracks"),
@@ -47,8 +49,15 @@ impl<'a> Tracks<'a> {
                 ("format", "json"),
                 ("page", &format!("{}", self.page)),
                 ("limit", "200"),
-            ])
-            .send()?;
+            ]);
+        let req = if let Some(from) = self.from {
+            req.query(&[("from", &format!("{}", from))])
+        }
+        else {
+            req
+        };
+
+        let mut res = req.send()?;
 
         if res.status().is_success() {
             let data: api_types::recent_tracks = res.json()?;
@@ -94,16 +103,23 @@ impl LastFMClient {
         }
     }
 
-    pub fn track_count(&self) -> Result<u64> {
-        let mut res = self.client
+    pub fn track_count(&self, from: Option<i64>) -> Result<u64> {
+        let req = self.client
             .get(API_ROOT)
             .query(&[
                 ("method", "user.getrecenttracks"),
                 ("api_key", &self.api_key),
                 ("user", &self.user),
                 ("format", "json"),
-            ])
-            .send()?;
+            ]);
+        let req = if let Some(from) = from {
+            req.query(&[("from", &format!("{}", from))])
+        }
+        else {
+            req
+        };
+
+        let mut res = req.send()?;
 
         if res.status().is_success() {
             let data: api_types::recent_tracks = res.json()?;
@@ -114,7 +130,7 @@ impl LastFMClient {
         }
     }
 
-    pub fn tracks(&self) -> Tracks {
-        Tracks::new(&self)
+    pub fn tracks(&self, from: Option<i64>) -> Tracks {
+        Tracks::new(&self, from)
     }
 }
