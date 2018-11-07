@@ -1,3 +1,5 @@
+#[macro_use]
+extern crate clap;
 extern crate directories;
 extern crate failure;
 extern crate indicatif;
@@ -8,6 +10,7 @@ extern crate serde_json;
 #[macro_use]
 extern crate serde_derive;
 
+mod cli;
 mod error;
 mod exporter;
 mod lastfm;
@@ -15,16 +18,11 @@ mod paths;
 mod db;
 
 fn main() {
-    let args: Vec<_> = std::env::args().collect();
-    if args.len() < 3 {
-        panic!("usage: {} USERNAME API_KEY", args[0]);
-    }
-    let username = &args[1];
-    let api_key = &args[2];
+    let opts = cli::get_options();
 
     let db = db::DB::new(&paths::dbpath())
         .expect("failed to create db");
-    let lastfm = lastfm::LastFMClient::new(api_key, username);
+    let lastfm = lastfm::LastFMClient::new(&opts.api_key, &opts.username);
     let exporter = exporter::Exporter::new(&db, &lastfm);
 
     let to_fetch = exporter.tracks_to_sync().unwrap();
