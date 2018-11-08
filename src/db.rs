@@ -74,10 +74,9 @@ impl DB {
         })?)
     }
 
-    pub fn insert_tracks<F: FnMut(lastfm::Track)>(
+    pub fn insert_tracks(
         &self,
         tracks: impl Iterator<Item=lastfm::Track>,
-        mut f: F
     ) -> failure::Fallible<()> {
         let mut sth = self.conn.prepare("INSERT INTO tracks VALUES (?, ?, ?, ?)")?;
         for track in tracks {
@@ -88,7 +87,6 @@ impl DB {
                 &track.name,
                 &track.timestamp,
             ]).map(|_| ())?;
-            f(track);
         }
         Ok(())
     }

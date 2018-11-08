@@ -1,6 +1,5 @@
 use cli;
 use db;
-use exporter;
 use lastfm;
 use paths;
 
@@ -13,9 +12,9 @@ pub fn run(opts: &cli::Options) -> failure::Fallible<()> {
         opts.username.as_ref().unwrap()
     );
 
-    let exporter = exporter::Exporter::new(&db, &lastfm);
+    let ts = db.most_recent_timestamp()?;
+    let to_fetch = lastfm.track_count(ts.map(|x| x + 1))?;
 
-    let to_fetch = exporter.tracks_to_sync()?;
     let bar = indicatif::ProgressBar::new(to_fetch);
     bar.set_style(
         indicatif::ProgressStyle::default_bar()
@@ -23,7 +22,7 @@ pub fn run(opts: &cli::Options) -> failure::Fallible<()> {
             .template("Downloading {pos}/{len} tracks...\n{percent:>3}% [{wide_bar}] {eta:5}")
     );
 
-    exporter.sync(|_| { bar.inc(1); })?;
+    db.insert_tracks(bar.wrap_iter(lastfm.tracks(ts.map(|x| x + 1))))?;
 
     bar.finish_with_message("done");
 

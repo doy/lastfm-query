@@ -13,7 +13,6 @@ extern crate serde_derive;
 
 mod cli;
 mod cmd;
-mod exporter;
 mod lastfm;
 mod paths;
 mod db;
