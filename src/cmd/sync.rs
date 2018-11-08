@@ -12,8 +12,8 @@ pub fn run(opts: &cli::Options) -> failure::Fallible<()> {
         opts.username.as_ref().unwrap()
     );
 
-    let ts = db.most_recent_timestamp()?;
-    let to_fetch = lastfm.track_count(ts.map(|x| x + 1))?;
+    let from = db.most_recent_timestamp()?.map(|x| x + 1);
+    let to_fetch = lastfm.track_count(from)?;
 
     let bar = indicatif::ProgressBar::new(to_fetch);
     bar.set_style(
@@ -22,7 +22,7 @@ pub fn run(opts: &cli::Options) -> failure::Fallible<()> {
             .template("Downloading {pos}/{len} tracks...\n{percent:>3}% [{wide_bar}] {eta:5}")
     );
 
-    db.insert_tracks(bar.wrap_iter(lastfm.tracks(ts.map(|x| x + 1))))?;
+    db.insert_tracks(bar.wrap_iter(lastfm.tracks(from)))?;
 
     bar.finish_with_message("done");
 
