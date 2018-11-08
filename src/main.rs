@@ -19,9 +19,9 @@ mod paths;
 mod db;
 
 fn run() -> failure::Fallible<()> {
-    let opts = cli::get_options()?;
-    match opts.command {
-        cli::Command::Sync => cmd::sync::run(&opts),
+    let command = cli::get_options()?;
+    match command {
+        cli::Command::Sync { username } => cmd::sync::run(&username),
     }
 }
 

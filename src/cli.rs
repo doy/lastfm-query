@@ -1,15 +1,12 @@
 const _DUMMY_DEPENDENCY: &'static str = include_str!("../Cargo.toml");
 
 pub enum Command {
-    Sync,
+    Sync {
+        username: String,
+    }
 }
 
-pub struct Options {
-    pub command: Command,
-    pub username: Option<String>,
-}
-
-pub fn get_options() -> failure::Fallible<Options> {
+pub fn get_options() -> failure::Fallible<Command> {
     let matches = app_from_crate!()
         .subcommand(
             clap::SubCommand::with_name("sync")
@@ -22,14 +19,15 @@ pub fn get_options() -> failure::Fallible<Options> {
         )
         .get_matches();
 
-    let (command, sub_matches) = match matches.subcommand() {
-        ("sync", Some(matches)) => (Command::Sync, matches),
+    let command = match matches.subcommand() {
+        ("sync", Some(matches)) => {
+            Command::Sync {
+                username: matches.value_of("username").unwrap().to_string(),
+            }
+        },
         (name, Some(_)) => bail!("unknown subcommand: {}", name),
         (_, None) => bail!("no subcommand given"),
     };
 
-    Ok(Options {
-        command: command,
-        username: sub_matches.value_of("username").map(|s| s.to_string()),
-    })
+    Ok(command)
 }

@@ -1,13 +1,10 @@
-use cli;
 use db;
 use lastfm;
 use paths;
 
-pub fn run(opts: &cli::Options) -> failure::Fallible<()> {
+pub fn run(username: &str) -> failure::Fallible<()> {
     let db = db::DB::new(&paths::db_path()?)?;
-    let lastfm = lastfm::LastFMClient::new(
-        opts.username.as_ref().unwrap()
-    )?;
+    let lastfm = lastfm::LastFMClient::new(username)?;
 
     let from = db.most_recent_timestamp()?.map(|x| x + 1);
     let to_fetch = lastfm.track_count(from)?;
