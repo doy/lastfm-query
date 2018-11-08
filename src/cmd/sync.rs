@@ -6,7 +6,7 @@ use paths;
 use failure;
 
 pub fn run(opts: &cli::Options) -> failure::Fallible<()> {
-    let db = db::DB::new(&paths::dbpath())?;
+    let db = db::DB::new(&paths::dbpath()?)?;
     let lastfm = lastfm::LastFMClient::new(
         opts.api_key.as_ref().unwrap(),
         opts.username.as_ref().unwrap()
