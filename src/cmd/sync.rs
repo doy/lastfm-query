@@ -4,11 +4,10 @@ use lastfm;
 use paths;
 
 pub fn run(opts: &cli::Options) -> failure::Fallible<()> {
-    let db = db::DB::new(&paths::dbpath()?)?;
+    let db = db::DB::new(&paths::db_path()?)?;
     let lastfm = lastfm::LastFMClient::new(
-        opts.api_key.as_ref().unwrap(),
         opts.username.as_ref().unwrap()
-    );
+    )?;
 
     let from = db.most_recent_timestamp()?.map(|x| x + 1);
     let to_fetch = lastfm.track_count(from)?;

@@ -5,6 +5,7 @@ extern crate directories;
 extern crate failure;
 extern crate indicatif;
 extern crate reqwest;
+extern crate rpassword;
 extern crate rusqlite;
 extern crate serde;
 extern crate serde_json;

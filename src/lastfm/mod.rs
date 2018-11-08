@@ -1,3 +1,8 @@
+use paths;
+
+use failure::Fail;
+use std::io::{Read, Write};
+
 mod api_types;
 
 const API_ROOT: &'static str = "https://ws.audioscrobbler.com/2.0/";
@@ -98,12 +103,12 @@ impl<'a> Iterator for Tracks<'a> {
 }
 
 impl LastFMClient {
-    pub fn new(api_key: &str, user: &str) -> LastFMClient {
-        LastFMClient {
+    pub fn new(user: &str) -> failure::Fallible<LastFMClient> {
+        Ok(LastFMClient {
             client: reqwest::Client::new(),
-            api_key: api_key.to_string(),
+            api_key: find_api_key()?,
             user: user.to_string(),
-        }
+        })
     }
 
     pub fn track_count(&self, from: Option<i64>) -> failure::Fallible<u64> {
@@ -150,4 +155,40 @@ impl LastFMClient {
             Err(failure::err_msg(res.status().as_str().to_string()))
         }
     }
+}
+
+fn find_api_key() -> failure::Fallible<String> {
+    let api_key_path = paths::api_key_path()
+        .map_err(|e| e.context("failed to determine api key path"))?;
+    let api_key = if api_key_path.exists() {
+        let mut api_key = String::new();
+        let mut f = std::fs::File::open(&api_key_path)
+            .map_err(|e| {
+                e.context(format!("failed to open {}", api_key_path.display()))
+            })?;
+        f.read_to_string(&mut api_key)
+            .map_err(|e| {
+                e.context(format!("failed to read from {}", api_key_path.display()))
+            })?;
+        api_key
+    }
+    else {
+        let api_key = rpassword::prompt_password_stderr(
+            &format!(
+                "last.fm api key (will be stored in {}): ",
+                api_key_path.display()
+            )
+        )?;
+        std::fs::create_dir_all(api_key_path.parent().unwrap())?;
+        let mut f = std::fs::File::create(&api_key_path)
+            .map_err(|e| {
+                e.context(format!("failed to open {}", api_key_path.display()))
+            })?;
+        f.write_all(api_key.as_bytes())
+            .map_err(|e| {
+                e.context(format!("failed to write to {}", api_key_path.display()))
+            })?;
+        api_key
+    };
+    Ok(api_key.trim_end().to_string())
 }

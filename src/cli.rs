@@ -7,7 +7,6 @@ pub enum Command {
 pub struct Options {
     pub command: Command,
     pub username: Option<String>,
-    pub api_key: Option<String>,
 }
 
 pub fn get_options() -> failure::Fallible<Options> {
@@ -17,19 +16,8 @@ pub fn get_options() -> failure::Fallible<Options> {
                 .about("Updates the local copy of track data from last.fm")
                 .arg(
                     clap::Arg::with_name("username")
-                        .short("u")
-                        .long("username")
-                        .value_name("USERNAME")
                         .required(true)
                         .help("last.fm username to fetch tracks for")
-                )
-                .arg(
-                    clap::Arg::with_name("api-key")
-                        .short("k")
-                        .long("api-key")
-                        .value_name("API_KEY")
-                        .required(true)
-                        .help("last.fm api key")
                 )
         )
         .get_matches();
@@ -43,6 +31,5 @@ pub fn get_options() -> failure::Fallible<Options> {
     Ok(Options {
         command: command,
         username: sub_matches.value_of("username").map(|s| s.to_string()),
-        api_key: sub_matches.value_of("api-key").map(|s| s.to_string()),
     })
 }
