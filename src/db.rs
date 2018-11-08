@@ -1,4 +1,3 @@
-use error::Result;
 use lastfm;
 
 use failure::Fail;
@@ -17,7 +16,7 @@ pub struct DB {
 }
 
 impl DB {
-    pub fn new<P: AsRef<std::path::Path>>(path: &P) -> Result<DB> {
+    pub fn new<P: AsRef<std::path::Path>>(path: &P) -> failure::Fallible<DB> {
         let conn = if path.as_ref().exists() {
             rusqlite::Connection::open(path)
                 .map_err(|e| {
@@ -37,7 +36,7 @@ impl DB {
 
     fn create<P: AsRef<std::path::Path>>(
         path: &P
-    ) -> Result<rusqlite::Connection> {
+    ) -> failure::Fallible<rusqlite::Connection> {
         println!(
             "Initializing database at {}",
             path.as_ref().to_string_lossy(),
@@ -62,7 +61,7 @@ impl DB {
         }
     }
 
-    pub fn most_recent_timestamp(&self) -> Result<Option<i64>> {
+    pub fn most_recent_timestamp(&self) -> failure::Fallible<Option<i64>> {
         Ok(self.conn.query_row(
             "SELECT timestamp FROM tracks ORDER BY timestamp DESC LIMIT 1",
             rusqlite::NO_PARAMS,
@@ -79,7 +78,7 @@ impl DB {
         &self,
         tracks: impl Iterator<Item=lastfm::Track>,
         mut f: F
-    ) -> Result<()> {
+    ) -> failure::Fallible<()> {
         let mut sth = self.conn.prepare("INSERT INTO tracks VALUES (?, ?, ?, ?)")?;
         for track in tracks {
             sth.execute(

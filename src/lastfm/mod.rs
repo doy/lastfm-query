@@ -1,8 +1,6 @@
 use failure;
 use reqwest;
 
-use error::Result;
-
 mod api_types;
 
 const API_ROOT: &'static str = "https://ws.audioscrobbler.com/2.0/";
@@ -37,7 +35,7 @@ impl<'a> Tracks<'a> {
         }
     }
 
-    fn get_next_page(&mut self) -> Result<()> {
+    fn get_next_page(&mut self) -> failure::Fallible<()> {
         if !self.page.is_some() {
             self.page = Some(self.client.get_total_pages(self.from)?);
         }
@@ -78,7 +76,7 @@ impl<'a> Tracks<'a> {
                         timestamp: t.date.as_ref().unwrap().uts.parse()?,
                     })
                 })
-                .collect::<Result<Vec<Track>>>()?;
+                .collect::<failure::Fallible<Vec<Track>>>()?;
             self.page = Some(page - 1);
             Ok(())
         }
@@ -111,7 +109,7 @@ impl LastFMClient {
         }
     }
 
-    pub fn track_count(&self, from: Option<i64>) -> Result<u64> {
+    pub fn track_count(&self, from: Option<i64>) -> failure::Fallible<u64> {
         let data = self.recent_tracks(from)?;
         Ok(data.recenttracks.attr.total.parse()?)
     }
@@ -120,7 +118,7 @@ impl LastFMClient {
         Tracks::new(&self, from)
     }
 
-    fn get_total_pages(&self, from: Option<i64>) -> Result<u64> {
+    fn get_total_pages(&self, from: Option<i64>) -> failure::Fallible<u64> {
         let data = self.recent_tracks(from)?;
         Ok(data.recenttracks.attr.totalPages.parse()?)
     }
@@ -128,7 +126,7 @@ impl LastFMClient {
     fn recent_tracks(
         &self,
         from: Option<i64>,
-    ) -> Result<api_types::recent_tracks> {
+    ) -> failure::Fallible<api_types::recent_tracks> {
         let req = self.client
             .get(API_ROOT)
             .query(&[

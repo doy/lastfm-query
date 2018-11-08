@@ -12,15 +12,12 @@ extern crate serde_json;
 extern crate serde_derive;
 
 mod cli;
-mod error;
 mod exporter;
 mod lastfm;
 mod paths;
 mod db;
 
-use error::Result;
-
-fn run(opts: cli::Options) -> Result<()> {
+fn run(opts: cli::Options) -> failure::Fallible<()> {
     let db = db::DB::new(&paths::dbpath())?;
     let lastfm = lastfm::LastFMClient::new(&opts.api_key, &opts.username);
     let exporter = exporter::Exporter::new(&db, &lastfm);
@@ -42,7 +39,7 @@ fn run(opts: cli::Options) -> Result<()> {
     Ok(())
 }
 
-fn program_name() -> Result<String> {
+fn program_name() -> failure::Fallible<String> {
     let program = std::env::args()
         .next()
         .ok_or_else(|| format_err!("no program name found"))?;
