@@ -1,6 +1,8 @@
 use error::Result;
 use lastfm;
 
+use failure::Fail;
+
 const SCHEMA: &'static str = "
     CREATE TABLE `tracks` (
         artist varchar(1024) NOT NULL,
@@ -17,7 +19,14 @@ pub struct DB {
 impl DB {
     pub fn new<P: AsRef<std::path::Path>>(path: &P) -> Result<DB> {
         let conn = if path.as_ref().exists() {
-            rusqlite::Connection::open(path)?
+            rusqlite::Connection::open(path)
+                .map_err(|e| {
+                    let msg = format!(
+                        "couldn't open db at {}",
+                        path.as_ref().display()
+                    );
+                    e.context(msg)
+                })?
         }
         else {
             Self::create(path)?
@@ -36,8 +45,16 @@ impl DB {
 
         if let Some(parent) = path.as_ref().parent() {
             std::fs::create_dir_all(parent)?;
-            let conn = rusqlite::Connection::open(path)?;
-            conn.execute(SCHEMA, rusqlite::NO_PARAMS)?;
+            let conn = rusqlite::Connection::open(path)
+                .map_err(|e| {
+                    let msg = format!(
+                        "couldn't create db at {}",
+                        path.as_ref().display()
+                    );
+                    e.context(msg)
+                })?;
+            conn.execute(SCHEMA, rusqlite::NO_PARAMS)
+                .map_err(|e| e.context("failed to execute schema"))?;
             Ok(conn)
         }
         else {

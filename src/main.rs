@@ -1,6 +1,7 @@
 #[macro_use]
 extern crate clap;
 extern crate directories;
+#[macro_use]
 extern crate failure;
 extern crate indicatif;
 extern crate reqwest;
@@ -17,15 +18,14 @@ mod lastfm;
 mod paths;
 mod db;
 
-fn main() {
-    let opts = cli::get_options();
+use error::Result;
 
-    let db = db::DB::new(&paths::dbpath())
-        .expect("failed to create db");
+fn run(opts: cli::Options) -> Result<()> {
+    let db = db::DB::new(&paths::dbpath())?;
     let lastfm = lastfm::LastFMClient::new(&opts.api_key, &opts.username);
     let exporter = exporter::Exporter::new(&db, &lastfm);
 
-    let to_fetch = exporter.tracks_to_sync().unwrap();
+    let to_fetch = exporter.tracks_to_sync()?;
     println!("need to download {} tracks", to_fetch);
 
     let bar = indicatif::ProgressBar::new(to_fetch);
@@ -35,8 +35,40 @@ fn main() {
             .template("{percent:>3}% [{wide_bar}] {eta:5}")
     );
 
-    exporter.sync(|_| { bar.inc(1); })
-        .expect("failed to update db");
+    exporter.sync(|_| { bar.inc(1); })?;
 
     bar.finish_with_message("done");
+
+    Ok(())
+}
+
+fn program_name() -> Result<String> {
+    let program = std::env::args()
+        .next()
+        .ok_or_else(|| format_err!("no program name found"))?;
+    let path = std::path::Path::new(&program);
+    let filename = path.file_name()
+        .ok_or_else(|| format_err!("invalid filename found"))?
+        .to_string_lossy()
+        .to_string();
+    Ok(filename)
+}
+
+fn main() {
+    let opts = cli::get_options();
+    match run(opts) {
+        Ok(_) => {},
+        Err(e) => {
+            let name = program_name()
+                .unwrap_or_else(|e| {
+                    eprintln!("{}", e);
+                    "?".to_string()
+                });
+            let cause = e
+                .iter_chain()
+                .fold(String::new(), |acc, x| acc + ": " + &format!("{}", x));
+            eprintln!("{}{}", name, cause);
+            std::process::exit(1);
+        }
+    }
 }
