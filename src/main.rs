@@ -27,13 +27,11 @@ fn sync(opts: &cli::Options) -> failure::Fallible<()> {
     let exporter = exporter::Exporter::new(&db, &lastfm);
 
     let to_fetch = exporter.tracks_to_sync()?;
-    println!("need to download {} tracks", to_fetch);
-
     let bar = indicatif::ProgressBar::new(to_fetch);
     bar.set_style(
         indicatif::ProgressStyle::default_bar()
             .progress_chars("=> ")
-            .template("{percent:>3}% [{wide_bar}] {eta:5}")
+            .template("Downloading {pos}/{len} tracks...\n{percent:>3}% [{wide_bar}] {eta:5}")
     );
 
     exporter.sync(|_| { bar.inc(1); })?;

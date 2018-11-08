@@ -37,7 +37,7 @@ impl DB {
     fn create<P: AsRef<std::path::Path>>(
         path: &P
     ) -> failure::Fallible<rusqlite::Connection> {
-        println!(
+        eprintln!(
             "Initializing database at {}",
             path.as_ref().to_string_lossy(),
         );
