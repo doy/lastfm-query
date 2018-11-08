@@ -17,9 +17,13 @@ mod lastfm;
 mod paths;
 mod db;
 
-fn run(opts: cli::Options) -> failure::Fallible<()> {
+fn sync(opts: &cli::Options) -> failure::Fallible<()> {
     let db = db::DB::new(&paths::dbpath())?;
-    let lastfm = lastfm::LastFMClient::new(&opts.api_key, &opts.username);
+    let lastfm = lastfm::LastFMClient::new(
+        opts.api_key.as_ref().unwrap(),
+        opts.username.as_ref().unwrap()
+    );
+
     let exporter = exporter::Exporter::new(&db, &lastfm);
 
     let to_fetch = exporter.tracks_to_sync()?;
@@ -39,6 +43,13 @@ fn run(opts: cli::Options) -> failure::Fallible<()> {
     Ok(())
 }
 
+fn run() -> failure::Fallible<()> {
+    let opts = cli::get_options()?;
+    match opts.command {
+        cli::Command::Sync => sync(&opts),
+    }
+}
+
 fn program_name() -> failure::Fallible<String> {
     let program = std::env::args()
         .next()
@@ -52,8 +63,7 @@ fn program_name() -> failure::Fallible<String> {
 }
 
 fn main() {
-    let opts = cli::get_options();
-    match run(opts) {
+    match run() {
         Ok(_) => {},
         Err(e) => {
             let name = program_name()
