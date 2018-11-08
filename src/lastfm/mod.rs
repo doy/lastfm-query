@@ -1,6 +1,3 @@
-use failure;
-use reqwest;
-
 mod api_types;
 
 const API_ROOT: &'static str = "https://ws.audioscrobbler.com/2.0/";

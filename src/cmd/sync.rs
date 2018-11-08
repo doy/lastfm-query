@@ -3,8 +3,6 @@ use db;
 use lastfm;
 use paths;
 
-use failure;
-
 pub fn run(opts: &cli::Options) -> failure::Fallible<()> {
     let db = db::DB::new(&paths::dbpath()?)?;
     let lastfm = lastfm::LastFMClient::new(

@@ -1,6 +1,3 @@
-use clap;
-use failure;
-
 const _DUMMY_DEPENDENCY: &'static str = include_str!("../Cargo.toml");
 
 pub enum Command {
