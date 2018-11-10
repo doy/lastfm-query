@@ -24,7 +24,7 @@ pub fn subcommand<'a, 'b>() -> clap::App<'a, 'b> {
         .arg(
             clap::Arg::with_name("random")
                 .long("random")
-                .help("pick a random artist instead of by weight")
+                .help("picks randomly instead of by weight")
         )
         .arg(
             clap::Arg::with_name("album")
