@@ -18,11 +18,11 @@ fn get_command() -> failure::Fallible<Box<Command>> {
         sql::subcommand(),
         recommend::subcommand(),
     ];
-    let matches = app_from_crate!()
+    let mut app = app_from_crate!()
         .subcommands(subcommands.into_iter().map(|s| {
             s.setting(clap::AppSettings::DisableVersion)
-        }))
-        .get_matches();
+        }));
+    let matches = app.clone().get_matches();
 
     let command: Box<Command> = match matches.subcommand() {
         ("sync", Some(matches)) => Box::new(sync::Command::new(matches)),
@@ -30,7 +30,12 @@ fn get_command() -> failure::Fallible<Box<Command>> {
         ("recommend", Some(matches)) => Box::new(recommend::Command::new(matches)?),
 
         (name, Some(_)) => bail!("unknown subcommand: {}", name),
-        (_, None) => bail!("no subcommand given"),
+        (_, None) => {
+            let mut stderr = std::io::stderr();
+            app.write_long_help(&mut stderr)?;
+            eprintln!("");
+            bail!("no subcommand given")
+        },
     };
 
     Ok(command)
