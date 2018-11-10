@@ -1,10 +1,11 @@
+use cli;
 use db;
 use lastfm;
 use paths;
 
 use clap;
 
-pub struct Options {
+pub struct Command {
     username: String,
 }
 
@@ -18,31 +19,35 @@ pub fn subcommand<'a, 'b>() -> clap::App<'a, 'b> {
         )
 }
 
-pub fn options<'a>(matches: &clap::ArgMatches<'a>) -> Options {
-    Options {
-        username: matches.value_of("username").unwrap().to_string(),
+impl Command {
+    pub fn new<'a>(matches: &clap::ArgMatches<'a>) -> Command {
+        Command {
+            username: matches.value_of("username").unwrap().to_string(),
+        }
     }
 }
 
-pub fn run(options: &Options) -> failure::Fallible<()> {
-    let db = db::DB::new(&paths::db_path()?)?;
-    let lastfm = lastfm::LastFMClient::new(&options.username)?;
+impl cli::Command for Command {
+    fn run(&self) -> failure::Fallible<()> {
+        let db = db::DB::new(&paths::db_path()?)?;
+        let lastfm = lastfm::LastFMClient::new(&self.username)?;
 
-    let from = db.most_recent_timestamp()?.map(|x| x + 1);
-    let to_fetch = lastfm.track_count(from)?;
+        let from = db.most_recent_timestamp()?.map(|x| x + 1);
+        let to_fetch = lastfm.track_count(from)?;
 
-    if to_fetch > 0 {
-        let bar = indicatif::ProgressBar::new(to_fetch);
-        bar.set_style(
-            indicatif::ProgressStyle::default_bar()
-                .progress_chars("=> ")
-                .template("Downloading {pos}/{len} tracks...\n{percent:>3}% [{wide_bar}] {eta:5}")
-        );
+        if to_fetch > 0 {
+            let bar = indicatif::ProgressBar::new(to_fetch);
+            bar.set_style(
+                indicatif::ProgressStyle::default_bar()
+                    .progress_chars("=> ")
+                    .template("Downloading {pos}/{len} tracks...\n{percent:>3}% [{wide_bar}] {eta:5}")
+            );
 
-        db.insert_tracks(bar.wrap_iter(lastfm.tracks(from)))?;
+            db.insert_tracks(bar.wrap_iter(lastfm.tracks(from)))?;
 
-        bar.finish_with_message("done");
+            bar.finish_with_message("done");
+        }
+
+        Ok(())
     }
-
-    Ok(())
 }

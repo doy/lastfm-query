@@ -2,27 +2,23 @@ use cmd;
 
 const _DUMMY_DEPENDENCY: &'static str = include_str!("../Cargo.toml");
 
-enum Command {
-    Sync(cmd::sync::Options),
-    SQL(cmd::sql::Options),
+pub trait Command {
+    fn run(&self) -> failure::Fallible<()>;
 }
 
 pub fn run() -> failure::Fallible<()> {
-    match get_options()? {
-        Command::Sync(options) => cmd::sync::run(&options),
-        Command::SQL(options) => cmd::sql::run(&options),
-    }
+    get_command()?.run()
 }
 
-fn get_options() -> failure::Fallible<Command> {
+fn get_command() -> failure::Fallible<Box<Command>> {
     let matches = app_from_crate!()
         .subcommand(cmd::sync::subcommand())
         .subcommand(cmd::sql::subcommand())
         .get_matches();
 
-    let command = match matches.subcommand() {
-        ("sync", Some(matches)) => Command::Sync(cmd::sync::options(matches)),
-        ("sql", Some(matches)) => Command::SQL(cmd::sql::options(matches)),
+    let command: Box<Command> = match matches.subcommand() {
+        ("sync", Some(matches)) => Box::new(cmd::sync::Command::new(matches)),
+        ("sql", Some(matches)) => Box::new(cmd::sql::Command::new(matches)),
 
         (name, Some(_)) => bail!("unknown subcommand: {}", name),
         (_, None) => bail!("no subcommand given"),

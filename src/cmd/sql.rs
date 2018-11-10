@@ -1,9 +1,10 @@
+use cli;
 use db;
 use paths;
 
 use clap;
 
-pub struct Options {
+pub struct Command {
     query: String,
     tsv: bool,
 }
@@ -23,37 +24,41 @@ pub fn subcommand<'a, 'b>() -> clap::App<'a, 'b> {
         )
 }
 
-pub fn options<'a>(matches: &clap::ArgMatches<'a>) -> Options {
-    Options {
-        query: matches.value_of("query").unwrap().to_string(),
-        tsv: matches.is_present("tsv"),
+impl Command {
+    pub fn new<'a>(matches: &clap::ArgMatches<'a>) -> Command {
+        Command {
+            query: matches.value_of("query").unwrap().to_string(),
+            tsv: matches.is_present("tsv"),
+        }
     }
 }
 
-pub fn run(options: &Options) -> failure::Fallible<()> {
-    let db = db::DB::new(&paths::db_path()?)?;
+impl cli::Command for Command {
+    fn run(&self) -> failure::Fallible<()> {
+        let db = db::DB::new(&paths::db_path()?)?;
 
-    let rows_cell = std::cell::Cell::new(Some(vec![]));
-    let cols = db.query(&options.query, |row| {
-        let display_row: Vec<String> = (0..row.column_count())
-            .map(|i| row.get_raw(i))
-            .map(|v| format_value(&v))
-            .collect();
-        let mut rows = rows_cell.replace(None).unwrap();
-        rows.push(display_row);
-        rows_cell.replace(Some(rows));
-    })?;
+        let rows_cell = std::cell::Cell::new(Some(vec![]));
+        let cols = db.query(&self.query, |row| {
+            let display_row: Vec<String> = (0..row.column_count())
+                .map(|i| row.get_raw(i))
+                .map(|v| format_value(&v))
+                .collect();
+            let mut rows = rows_cell.replace(None).unwrap();
+            rows.push(display_row);
+            rows_cell.replace(Some(rows));
+        })?;
 
-    let rows = rows_cell.into_inner().unwrap();
+        let rows = rows_cell.into_inner().unwrap();
 
-    if options.tsv {
-        print_tsv(&rows);
+        if self.tsv {
+            print_tsv(&rows);
+        }
+        else {
+            print_table(&cols, &rows);
+        }
+
+        Ok(())
     }
-    else {
-        print_table(&cols, &rows);
-    }
-
-    Ok(())
 }
 
 fn print_table(cols: &[String], rows: &[Vec<String>]) {
