@@ -2,9 +2,31 @@ use db;
 use lastfm;
 use paths;
 
-pub fn run(username: &str) -> failure::Fallible<()> {
+use clap;
+
+pub struct Options {
+    username: String,
+}
+
+pub fn subcommand<'a, 'b>() -> clap::App<'a, 'b> {
+    clap::SubCommand::with_name("sync")
+        .about("Updates the local copy of track data from last.fm")
+        .arg(
+            clap::Arg::with_name("username")
+                .required(true)
+                .help("last.fm username to fetch tracks for")
+        )
+}
+
+pub fn options<'a>(matches: &clap::ArgMatches<'a>) -> Options {
+    Options {
+        username: matches.value_of("username").unwrap().to_string(),
+    }
+}
+
+pub fn run(options: &Options) -> failure::Fallible<()> {
     let db = db::DB::new(&paths::db_path()?)?;
-    let lastfm = lastfm::LastFMClient::new(username)?;
+    let lastfm = lastfm::LastFMClient::new(&options.username)?;
 
     let from = db.most_recent_timestamp()?.map(|x| x + 1);
     let to_fetch = lastfm.track_count(from)?;

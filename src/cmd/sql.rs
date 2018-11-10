@@ -1,11 +1,40 @@
 use db;
 use paths;
 
-pub fn run(query: &str, tsv: bool) -> failure::Fallible<()> {
+use clap;
+
+pub struct Options {
+    query: String,
+    tsv: bool,
+}
+
+pub fn subcommand<'a, 'b>() -> clap::App<'a, 'b> {
+    clap::SubCommand::with_name("sql")
+        .about("Run a query against the local database")
+        .arg(
+            clap::Arg::with_name("query")
+                .required(true)
+                .help("query to run")
+        )
+        .arg(
+            clap::Arg::with_name("tsv")
+                .long("tsv")
+                .help("format output as tsv")
+        )
+}
+
+pub fn options<'a>(matches: &clap::ArgMatches<'a>) -> Options {
+    Options {
+        query: matches.value_of("query").unwrap().to_string(),
+        tsv: matches.is_present("tsv"),
+    }
+}
+
+pub fn run(options: &Options) -> failure::Fallible<()> {
     let db = db::DB::new(&paths::db_path()?)?;
 
     let rows_cell = std::cell::Cell::new(Some(vec![]));
-    let cols = db.query(query, |row| {
+    let cols = db.query(&options.query, |row| {
         let display_row: Vec<String> = (0..row.column_count())
             .map(|i| row.get_raw(i))
             .map(|v| format_value(&v))
@@ -17,7 +46,7 @@ pub fn run(query: &str, tsv: bool) -> failure::Fallible<()> {
 
     let rows = rows_cell.into_inner().unwrap();
 
-    if tsv {
+    if options.tsv {
         print_tsv(&rows);
     }
     else {
