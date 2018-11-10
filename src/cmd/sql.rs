@@ -36,18 +36,14 @@ impl super::Command for Command {
     fn run(&self) -> failure::Fallible<()> {
         let db = db::DB::new(&util::db_path()?)?;
 
-        let rows_cell = std::cell::Cell::new(Some(vec![]));
+        let mut rows = vec![];
         let cols = db.query(&self.query, |row| {
             let display_row: Vec<String> = (0..row.column_count())
                 .map(|i| row.get_raw(i))
                 .map(|v| format_value(&v))
                 .collect();
-            let mut rows = rows_cell.replace(None).unwrap();
             rows.push(display_row);
-            rows_cell.replace(Some(rows));
         })?;
-
-        let rows = rows_cell.into_inner().unwrap();
 
         if self.tsv {
             print_tsv(&rows);

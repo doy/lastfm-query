@@ -112,10 +112,10 @@ impl DB {
         Ok(())
     }
 
-    pub fn query<F: Fn(&rusqlite::Row)>(
+    pub fn query<F: FnMut(&rusqlite::Row)>(
         &self,
         query: &str,
-        f: F
+        mut f: F
     ) -> failure::Fallible<Vec<String>> {
         let mut sth = self.conn.prepare(query)?;
 
