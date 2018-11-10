@@ -1,9 +1,9 @@
-pub mod sql;
-pub mod sync;
+mod sql;
+mod sync;
 
 const _DUMMY_DEPENDENCY: &'static str = include_str!("../../Cargo.toml");
 
-pub trait Command {
+trait Command {
     fn run(&self) -> failure::Fallible<()>;
 }
 
