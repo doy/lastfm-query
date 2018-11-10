@@ -9,6 +9,18 @@ const SCHEMA: &'static str = "
         name varchar(1024) NOT NULL,
         timestamp integer(11) NOT NULL
     );
+    CREATE VIEW `yearly_tracks` as
+        SELECT *
+        FROM tracks
+        WHERE strftime('%s') - timestamp < 60*60*24*365;
+    CREATE VIEW `monthly_tracks` as
+        SELECT *
+        FROM tracks
+        WHERE strftime('%s') - timestamp < 60*60*24*30;
+    CREATE VIEW `weekly_tracks` as
+        SELECT *
+        FROM tracks
+        WHERE strftime('%s') - timestamp < 60*60*24*7;
 ";
 
 pub struct DB {
