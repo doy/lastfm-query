@@ -90,4 +90,30 @@ impl DB {
         }
         Ok(())
     }
+
+    pub fn query<F: Fn(&rusqlite::Row)>(
+        &self,
+        query: &str,
+        f: F
+    ) -> failure::Fallible<Vec<String>> {
+        let mut sth = self.conn.prepare(query)?;
+
+        let cols = sth.column_names()
+            .iter()
+            .map(|s| s.to_string())
+            .collect();
+
+        let rows = sth.query_and_then(
+            rusqlite::NO_PARAMS,
+            |row| { f(row); Ok(()) },
+        )?;
+        // this call to collect() forces it to actually consume the iterator
+        // (and therefore call the callbacks). what i really want here is for
+        // there to be a query_for_each or something like that, but the weird
+        // way lifetimes work for rows makes it difficult to emulate this any
+        // other way
+        let errs: failure::Fallible<Vec<()>> = rows.collect();
+
+        errs.map(|_| cols)
+    }
 }

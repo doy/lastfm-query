@@ -22,6 +22,7 @@ fn run() -> failure::Fallible<()> {
     let command = cli::get_options()?;
     match command {
         cli::Command::Sync { username } => cmd::sync::run(&username),
+        cli::Command::SQL { query, tsv } => cmd::sql::run(&query, tsv),
     }
 }
 
