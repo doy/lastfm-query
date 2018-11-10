@@ -23,6 +23,15 @@ const SCHEMA: &'static str = "
         WHERE strftime('%s') - timestamp < 60*60*24*7;
 ";
 
+#[derive(Eq, PartialEq, Copy, Clone)]
+pub enum TimeWindow {
+    All,
+    Yearly,
+    Monthly,
+    Weekly,
+    None,
+}
+
 pub struct DB {
     conn: rusqlite::Connection,
 }
@@ -127,5 +136,112 @@ impl DB {
         let errs: failure::Fallible<Vec<()>> = rows.collect();
 
         errs.map(|_| cols)
+    }
+
+    pub fn recommend_artists(
+        &self,
+        count: u64,
+        random: bool,
+        include: TimeWindow,
+        exclude: TimeWindow,
+    ) -> failure::Fallible<Vec<String>> {
+        let exclude = if exclude != TimeWindow::None {
+            format!("
+                WHERE artist NOT IN (
+                    SELECT DISTINCT(artist)
+                    FROM {}
+                )
+            ", timewindow_table(&exclude))
+        }
+        else {
+            "".to_string()
+        };
+        let order = if random {
+            "ORDER BY random()"
+        }
+        else {
+            "ORDER BY count(artist) * (strftime('%s') - max(timestamp)) DESC"
+        };
+
+        let sql = format!("
+            SELECT artist
+            FROM {}
+            {}
+            GROUP BY artist
+            {}
+            LIMIT {}
+        ", timewindow_table(&include), exclude, order, count);
+        let mut sth = self.conn.prepare(&sql)?;
+        let artists = sth.query_and_then(rusqlite::NO_PARAMS, |row| {
+            Ok(row.get_checked(0)?)
+        })?.collect::<failure::Fallible<Vec<String>>>()?;
+
+        Ok(artists)
+    }
+
+    pub fn recommend_album(
+        &self,
+        artist: &str,
+        random: bool,
+        include: TimeWindow,
+        exclude: TimeWindow,
+    ) -> failure::Fallible<String> {
+        let mut params = vec![artist];
+        let exclude = if exclude != TimeWindow::None {
+            params.push(artist);
+            format!("
+                AND album NOT IN (
+                    SELECT DISTINCT(album)
+                    FROM {}
+                    WHERE artist = ?
+                )
+            ", timewindow_table(&exclude))
+        }
+        else {
+            "".to_string()
+        };
+        let order = if random {
+            "ORDER BY random()"
+        }
+        else {
+            "ORDER BY count(album) * (strftime('%s') - max(timestamp)) DESC"
+        };
+
+        let sql = format!("
+            SELECT album
+            FROM {}
+            WHERE artist = ?
+            {}
+            GROUP BY album
+            {}
+            LIMIT 1
+        ", timewindow_table(&include), exclude, order);
+        let mut sth = self.conn.prepare(&sql)?;
+        let artists = sth.query_row::<failure::Fallible<String>, _, _>(&params, |row| {
+            Ok(row.get_checked(0)?)
+        })??;
+
+        Ok(artists)
+    }
+}
+
+pub fn parse_timewindow(s: &str) -> TimeWindow {
+    match s {
+        "all" => TimeWindow::All,
+        "yearly" => TimeWindow::Yearly,
+        "monthly" => TimeWindow::Monthly,
+        "weekly" => TimeWindow::Weekly,
+        "none" => TimeWindow::None,
+        _ => unreachable!(),
+    }
+}
+
+fn timewindow_table(tw: &TimeWindow) -> String {
+    match tw {
+        TimeWindow::All => "tracks".to_string(),
+        TimeWindow::Yearly => "yearly_tracks".to_string(),
+        TimeWindow::Monthly => "monthly_tracks".to_string(),
+        TimeWindow::Weekly => "weekly_tracks".to_string(),
+        _ => unreachable!(),
     }
 }
