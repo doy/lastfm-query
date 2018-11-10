@@ -1,6 +1,8 @@
+use cmd;
+
 const _DUMMY_DEPENDENCY: &'static str = include_str!("../Cargo.toml");
 
-pub enum Command {
+enum Command {
     Sync {
         username: String,
     },
@@ -10,7 +12,15 @@ pub enum Command {
     },
 }
 
-pub fn get_options() -> failure::Fallible<Command> {
+pub fn run() -> failure::Fallible<()> {
+    let command = get_options()?;
+    match command {
+        Command::Sync { username } => cmd::sync::run(&username),
+        Command::SQL { query, tsv } => cmd::sql::run(&query, tsv),
+    }
+}
+
+fn get_options() -> failure::Fallible<Command> {
     let matches = app_from_crate!()
         .subcommand(
             clap::SubCommand::with_name("sync")

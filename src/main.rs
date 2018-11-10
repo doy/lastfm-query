@@ -18,14 +18,6 @@ mod lastfm;
 mod paths;
 mod db;
 
-fn run() -> failure::Fallible<()> {
-    let command = cli::get_options()?;
-    match command {
-        cli::Command::Sync { username } => cmd::sync::run(&username),
-        cli::Command::SQL { query, tsv } => cmd::sql::run(&query, tsv),
-    }
-}
-
 fn program_name() -> failure::Fallible<String> {
     let program = std::env::args()
         .next()
@@ -39,7 +31,7 @@ fn program_name() -> failure::Fallible<String> {
 }
 
 fn main() {
-    match run() {
+    match cli::run() {
         Ok(_) => {},
         Err(e) => {
             let name = program_name()
