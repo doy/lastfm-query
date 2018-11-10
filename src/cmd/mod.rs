@@ -13,10 +13,15 @@ pub fn run() -> failure::Fallible<()> {
 }
 
 fn get_command() -> failure::Fallible<Box<Command>> {
+    let subcommands = vec![
+        sync::subcommand(),
+        sql::subcommand(),
+        recommend::subcommand(),
+    ];
     let matches = app_from_crate!()
-        .subcommand(sync::subcommand())
-        .subcommand(sql::subcommand())
-        .subcommand(recommend::subcommand())
+        .subcommands(subcommands.into_iter().map(|s| {
+            s.setting(clap::AppSettings::DisableVersion)
+        }))
         .get_matches();
 
     let command: Box<Command> = match matches.subcommand() {
