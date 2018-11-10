@@ -1,4 +1,3 @@
-use cli;
 use db;
 use paths;
 
@@ -33,7 +32,7 @@ impl Command {
     }
 }
 
-impl cli::Command for Command {
+impl super::Command for Command {
     fn run(&self) -> failure::Fallible<()> {
         let db = db::DB::new(&paths::db_path()?)?;
 

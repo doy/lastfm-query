@@ -12,7 +12,6 @@ extern crate serde_json;
 #[macro_use]
 extern crate serde_derive;
 
-mod cli;
 mod cmd;
 mod lastfm;
 mod paths;
@@ -31,7 +30,7 @@ fn program_name() -> failure::Fallible<String> {
 }
 
 fn main() {
-    match cli::run() {
+    match cmd::run() {
         Ok(_) => {},
         Err(e) => {
             let name = program_name()
