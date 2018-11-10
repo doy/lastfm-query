@@ -1,6 +1,6 @@
 use db;
 use lastfm;
-use paths;
+use util;
 
 use clap;
 
@@ -28,7 +28,7 @@ impl Command {
 
 impl super::Command for Command {
     fn run(&self) -> failure::Fallible<()> {
-        let db = db::DB::new(&paths::db_path()?)?;
+        let db = db::DB::new(&util::db_path()?)?;
         let lastfm = lastfm::LastFMClient::new(&self.username)?;
 
         let from = db.most_recent_timestamp()?.map(|x| x + 1);

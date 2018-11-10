@@ -13,27 +13,15 @@ extern crate serde_json;
 extern crate serde_derive;
 
 mod cmd;
-mod lastfm;
-mod paths;
 mod db;
-
-fn program_name() -> failure::Fallible<String> {
-    let program = std::env::args()
-        .next()
-        .ok_or_else(|| format_err!("no program name found"))?;
-    let path = std::path::Path::new(&program);
-    let filename = path.file_name()
-        .ok_or_else(|| format_err!("invalid filename found"))?
-        .to_string_lossy()
-        .to_string();
-    Ok(filename)
-}
+mod lastfm;
+mod util;
 
 fn main() {
     match cmd::run() {
         Ok(_) => {},
         Err(e) => {
-            let name = program_name()
+            let name = util::program_name()
                 .unwrap_or_else(|e| {
                     eprintln!("{}", e);
                     "?".to_string()

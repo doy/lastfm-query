@@ -1,5 +1,5 @@
 use db;
-use paths;
+use util;
 
 use clap;
 
@@ -34,7 +34,7 @@ impl Command {
 
 impl super::Command for Command {
     fn run(&self) -> failure::Fallible<()> {
-        let db = db::DB::new(&paths::db_path()?)?;
+        let db = db::DB::new(&util::db_path()?)?;
 
         let rows_cell = std::cell::Cell::new(Some(vec![]));
         let cols = db.query(&self.query, |row| {

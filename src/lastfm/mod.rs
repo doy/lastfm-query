@@ -1,4 +1,4 @@
-use paths;
+use util;
 
 use failure::Fail;
 use std::io::{Read, Write};
@@ -158,7 +158,7 @@ impl LastFMClient {
 }
 
 fn find_api_key() -> failure::Fallible<String> {
-    let api_key_path = paths::api_key_path()
+    let api_key_path = util::api_key_path()
         .map_err(|e| e.context("failed to determine api key path"))?;
     let api_key = if api_key_path.exists() {
         let mut api_key = String::new();
