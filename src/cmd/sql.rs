@@ -14,12 +14,12 @@ pub fn subcommand<'a, 'b>() -> clap::App<'a, 'b> {
         .arg(
             clap::Arg::with_name("query")
                 .required(true)
-                .help("query to run")
+                .help("query to run"),
         )
         .arg(
             clap::Arg::with_name("tsv")
                 .long("tsv")
-                .help("format output as tsv")
+                .help("format output as tsv"),
         )
 }
 
@@ -47,8 +47,7 @@ impl super::Command for Command {
 
         if self.tsv {
             print_tsv(&rows);
-        }
-        else {
+        } else {
             print_table(&cols, &rows);
         }
 
@@ -100,7 +99,7 @@ fn print_row(widths: &[usize], row: &[String]) {
     let fixed_width_row: Vec<String> = row
         .iter()
         .zip(widths.iter())
-        .map(|(s, width)| format!("{:width$}", s, width=width))
+        .map(|(s, width)| format!("{:width$}", s, width = width))
         .collect();
     println!("{}", &fixed_width_row.join(" | "));
 }

@@ -43,23 +43,20 @@ impl<'a> Tracks<'a> {
         }
         let page = self.page.unwrap();
         if page < 1 {
-            return Ok(())
+            return Ok(());
         }
 
-        let req = self.client.client
-            .get(API_ROOT)
-            .query(&[
-                ("method", "user.getrecenttracks"),
-                ("api_key", &self.client.api_key),
-                ("user", &self.client.user),
-                ("format", "json"),
-                ("page", &format!("{}", page)),
-                ("limit", "200"),
-            ]);
+        let req = self.client.client.get(API_ROOT).query(&[
+            ("method", "user.getrecenttracks"),
+            ("api_key", &self.client.api_key),
+            ("user", &self.client.user),
+            ("format", "json"),
+            ("page", &format!("{}", page)),
+            ("limit", "200"),
+        ]);
         let req = if let Some(from) = self.from {
             req.query(&[("from", &format!("{}", from))])
-        }
-        else {
+        } else {
             req
         };
 
@@ -67,9 +64,11 @@ impl<'a> Tracks<'a> {
 
         if res.status().is_success() {
             let data: api_types::recent_tracks = res.json()?;
-            self.buf = data.recenttracks.track
+            self.buf = data
+                .recenttracks
+                .track
                 .iter()
-                .filter(|t| { t.date.is_some() })
+                .filter(|t| t.date.is_some())
                 .map(|t| {
                     Ok(Track {
                         artist: t.artist.text.clone(),
@@ -81,8 +80,7 @@ impl<'a> Tracks<'a> {
                 .collect::<failure::Fallible<Vec<Track>>>()?;
             self.page = Some(page - 1);
             Ok(())
-        }
-        else {
+        } else {
             Err(failure::err_msg(res.status().as_str().to_string()))
         }
     }
@@ -129,19 +127,16 @@ impl LastFMClient {
         &self,
         from: Option<i64>,
     ) -> failure::Fallible<api_types::recent_tracks> {
-        let req = self.client
-            .get(API_ROOT)
-            .query(&[
-                ("method", "user.getrecenttracks"),
-                ("api_key", &self.api_key),
-                ("user", &self.user),
-                ("format", "json"),
-                ("limit", "200"),
-            ]);
+        let req = self.client.get(API_ROOT).query(&[
+            ("method", "user.getrecenttracks"),
+            ("api_key", &self.api_key),
+            ("user", &self.user),
+            ("format", "json"),
+            ("limit", "200"),
+        ]);
         let req = if let Some(from) = from {
             req.query(&[("from", &format!("{}", from))])
-        }
-        else {
+        } else {
             req
         };
 
@@ -150,8 +145,7 @@ impl LastFMClient {
         if res.status().is_success() {
             let data: api_types::recent_tracks = res.json()?;
             Ok(data)
-        }
-        else {
+        } else {
             Err(failure::err_msg(res.status().as_str().to_string()))
         }
     }
@@ -162,32 +156,31 @@ fn find_api_key() -> failure::Fallible<String> {
         .map_err(|e| e.context("failed to determine api key path"))?;
     let api_key = if api_key_path.exists() {
         let mut api_key = String::new();
-        let mut f = std::fs::File::open(&api_key_path)
-            .map_err(|e| {
-                e.context(format!("failed to open {}", api_key_path.display()))
-            })?;
-        f.read_to_string(&mut api_key)
-            .map_err(|e| {
-                e.context(format!("failed to read from {}", api_key_path.display()))
-            })?;
-        api_key
-    }
-    else {
-        let api_key = rpassword::prompt_password_stderr(
-            &format!(
-                "last.fm api key (will be stored in {}): ",
+        let mut f = std::fs::File::open(&api_key_path).map_err(|e| {
+            e.context(format!("failed to open {}", api_key_path.display()))
+        })?;
+        f.read_to_string(&mut api_key).map_err(|e| {
+            e.context(format!(
+                "failed to read from {}",
                 api_key_path.display()
-            )
-        )?;
+            ))
+        })?;
+        api_key
+    } else {
+        let api_key = rpassword::prompt_password_stderr(&format!(
+            "last.fm api key (will be stored in {}): ",
+            api_key_path.display()
+        ))?;
         std::fs::create_dir_all(api_key_path.parent().unwrap())?;
-        let mut f = std::fs::File::create(&api_key_path)
-            .map_err(|e| {
-                e.context(format!("failed to open {}", api_key_path.display()))
-            })?;
-        f.write_all(api_key.as_bytes())
-            .map_err(|e| {
-                e.context(format!("failed to write to {}", api_key_path.display()))
-            })?;
+        let mut f = std::fs::File::create(&api_key_path).map_err(|e| {
+            e.context(format!("failed to open {}", api_key_path.display()))
+        })?;
+        f.write_all(api_key.as_bytes()).map_err(|e| {
+            e.context(format!(
+                "failed to write to {}",
+                api_key_path.display()
+            ))
+        })?;
         api_key
     };
     Ok(api_key.trim_end().to_string())

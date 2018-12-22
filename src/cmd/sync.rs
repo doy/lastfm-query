@@ -14,7 +14,7 @@ pub fn subcommand<'a, 'b>() -> clap::App<'a, 'b> {
         .arg(
             clap::Arg::with_name("username")
                 .required(true)
-                .help("last.fm username to fetch tracks for")
+                .help("last.fm username to fetch tracks for"),
         )
 }
 
@@ -39,7 +39,10 @@ impl super::Command for Command {
             bar.set_style(
                 indicatif::ProgressStyle::default_bar()
                     .progress_chars("=> ")
-                    .template("Downloading {pos}/{len} tracks...\n{percent:>3}% [{wide_bar}] {eta:5}")
+                    .template(
+                        "Downloading {pos}/{len} tracks...\n\
+                         {percent:>3}% [{wide_bar}] {eta:5}",
+                    ),
             );
 
             db.insert_tracks(bar.wrap_iter(lastfm.tracks(from)))?;

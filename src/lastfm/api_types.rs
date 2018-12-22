@@ -43,4 +43,3 @@ pub struct recent_tracks_recenttracks {
 pub struct recent_tracks {
     pub recenttracks: recent_tracks_recenttracks,
 }
-
