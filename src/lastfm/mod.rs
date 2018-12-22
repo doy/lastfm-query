@@ -5,7 +5,7 @@ use std::io::{Read, Write};
 
 mod api_types;
 
-const API_ROOT: &'static str = "https://ws.audioscrobbler.com/2.0/";
+const API_ROOT: &str = "https://ws.audioscrobbler.com/2.0/";
 
 pub struct LastFMClient {
     client: reqwest::Client,
@@ -38,7 +38,7 @@ impl<'a> Tracks<'a> {
     }
 
     fn get_next_page(&mut self) -> failure::Fallible<()> {
-        if !self.page.is_some() {
+        if self.page.is_none() {
             self.page = Some(self.client.get_total_pages(self.from)?);
         }
         let page = self.page.unwrap();
@@ -90,7 +90,7 @@ impl<'a> Iterator for Tracks<'a> {
     type Item = Track;
 
     fn next(&mut self) -> Option<Track> {
-        if self.buf.len() == 0 {
+        if self.buf.is_empty() {
             let result = self.get_next_page();
             if result.is_err() {
                 return None;

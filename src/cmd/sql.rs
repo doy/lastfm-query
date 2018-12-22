@@ -78,7 +78,7 @@ fn format_value(v: &rusqlite::types::ValueRef) -> String {
         rusqlite::types::ValueRef::Null => "null".to_string(),
         rusqlite::types::ValueRef::Integer(i) => format!("{}", i),
         rusqlite::types::ValueRef::Real(f) => format!("{}", f),
-        rusqlite::types::ValueRef::Text(s) => format!("{}", s),
+        rusqlite::types::ValueRef::Text(s) => s.to_string(),
         rusqlite::types::ValueRef::Blob(b) => format!("{:?}", b),
     }
 }

@@ -2,7 +2,7 @@ use lastfm;
 
 use failure::Fail;
 
-const SCHEMA: &'static str = "
+const SCHEMA: &str = "
     CREATE TABLE `tracks` (
         artist varchar(1024) NOT NULL,
         album varchar(1024) DEFAULT NULL,
@@ -50,7 +50,7 @@ impl DB {
             Self::create(path)?
         };
 
-        return Ok(DB { conn });
+        Ok(DB { conn })
     }
 
     fn create<P: AsRef<std::path::Path>>(
@@ -149,7 +149,7 @@ impl DB {
                     FROM {}
                 )
                 ",
-                timewindow_table(&exclude)
+                timewindow_table(exclude)
             )
         } else {
             "".to_string()
@@ -169,7 +169,7 @@ impl DB {
             {}
             LIMIT {}
             ",
-            timewindow_table(&include),
+            timewindow_table(include),
             exclude,
             order,
             count
@@ -202,7 +202,7 @@ impl DB {
                     WHERE artist = ?
                 )
                 ",
-                timewindow_table(&exclude)
+                timewindow_table(exclude)
             )
         } else {
             "".to_string()
@@ -223,7 +223,7 @@ impl DB {
             {}
             LIMIT 1
             ",
-            timewindow_table(&include),
+            timewindow_table(include),
             exclude,
             order
         );
@@ -248,7 +248,7 @@ pub fn parse_timewindow(s: &str) -> TimeWindow {
     }
 }
 
-fn timewindow_table(tw: &TimeWindow) -> String {
+fn timewindow_table(tw: TimeWindow) -> String {
     match tw {
         TimeWindow::All => "tracks".to_string(),
         TimeWindow::Yearly => "yearly_tracks".to_string(),

@@ -2,7 +2,7 @@ mod recommend;
 mod sql;
 mod sync;
 
-const _DUMMY_DEPENDENCY: &'static str = include_str!("../../Cargo.toml");
+const _DUMMY_DEPENDENCY: &str = include_str!("../../Cargo.toml");
 
 trait Command {
     fn run(&self) -> failure::Fallible<()>;

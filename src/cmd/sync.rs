@@ -35,8 +35,8 @@ impl super::Command for Command {
         let to_fetch = lastfm.track_count(from)?;
 
         if to_fetch > 0 {
-            let bar = indicatif::ProgressBar::new(to_fetch);
-            bar.set_style(
+            let pbar = indicatif::ProgressBar::new(to_fetch);
+            pbar.set_style(
                 indicatif::ProgressStyle::default_bar()
                     .progress_chars("=> ")
                     .template(
@@ -45,9 +45,9 @@ impl super::Command for Command {
                     ),
             );
 
-            db.insert_tracks(bar.wrap_iter(lastfm.tracks(from)))?;
+            db.insert_tracks(pbar.wrap_iter(lastfm.tracks(from)))?;
 
-            bar.finish_with_message("done");
+            pbar.finish_with_message("done");
         }
 
         Ok(())
