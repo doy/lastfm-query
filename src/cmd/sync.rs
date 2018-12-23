@@ -1,6 +1,6 @@
-use db;
-use lastfm;
-use util;
+use crate::db;
+use crate::lastfm;
+use crate::util;
 
 use clap;
 

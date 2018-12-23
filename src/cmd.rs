@@ -2,7 +2,13 @@ mod recommend;
 mod sql;
 mod sync;
 
-const _DUMMY_DEPENDENCY: &str = include_str!("../../Cargo.toml");
+use clap::{
+    app_from_crate, crate_authors, crate_description, crate_name,
+    crate_version,
+};
+use failure::bail;
+
+const _DUMMY_DEPENDENCY: &str = include_str!("../Cargo.toml");
 
 trait Command {
     fn run(&self) -> failure::Fallible<()>;

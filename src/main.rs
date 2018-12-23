@@ -1,17 +1,3 @@
-#[macro_use]
-extern crate clap;
-extern crate directories;
-#[macro_use]
-extern crate failure;
-extern crate indicatif;
-extern crate reqwest;
-extern crate rpassword;
-extern crate rusqlite;
-extern crate serde;
-extern crate serde_json;
-#[macro_use]
-extern crate serde_derive;
-
 mod cmd;
 mod db;
 mod lastfm;

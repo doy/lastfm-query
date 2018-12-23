@@ -1,3 +1,5 @@
+use failure::format_err;
+
 pub fn program_name() -> failure::Fallible<String> {
     let program = std::env::args()
         .next()

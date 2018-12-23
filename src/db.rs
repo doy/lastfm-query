@@ -1,4 +1,4 @@
-use lastfm;
+use crate::lastfm;
 
 use failure::Fail;
 
